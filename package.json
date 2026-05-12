@@ -3,7 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "docker compose up -d && wait-on tcp:127.0.0.1:5432 && prisma generate && prisma migrate deploy",
     "dev": "next dev",
+    "db:up": "docker compose up -d",
+    "db:deploy": "prisma migrate deploy",
+    "prisma:generate": "prisma generate",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
@@ -32,6 +36,7 @@
     "eslint-config-next": "16.2.3",
     "prisma": "^7.8.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wait-on": "^8.0.5"
   }
 }
