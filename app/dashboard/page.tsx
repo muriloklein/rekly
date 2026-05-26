@@ -69,19 +69,26 @@ export default function DashboardPage() {
   const [visaoReal, setVisaoReal] = useState(false)
 
   useEffect(() => {
-    fetch('/api/categories')
+    fetch('/api/categories', { credentials: 'include' })
       .then(r => r.json())
       .then(d => { if (d.categorias) setCategorias(d.categorias) })
+      .catch(() => {})
   }, [])
 
   const carregar = useCallback(async () => {
     setCarregando(true)
-    const params = new URLSearchParams({ mes: String(mes), ano: String(ano) })
-    if (categoriaId) params.set('categoriaId', String(categoriaId))
-    const res = await fetch(`/api/dashboard?${params}`)
-    const data = await res.json()
-    setDados(data)
-    setCarregando(false)
+    try {
+      const params = new URLSearchParams({ mes: String(mes), ano: String(ano) })
+      if (categoriaId) params.set('categoriaId', String(categoriaId))
+      const res = await fetch(`/api/dashboard?${params}`, { credentials: 'include' })
+      if (!res.ok) { setCarregando(false); return }
+      const data = await res.json()
+      if (data?.resumoGastos) setDados(data)
+    } catch {
+      // silencia erros de rede
+    } finally {
+      setCarregando(false)
+    }
   }, [mes, ano, categoriaId])
 
   useEffect(() => { carregar() }, [carregar])
