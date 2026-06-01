@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "predev": "docker-compose up -d && wait-on tcp:127.0.0.1:5432 && prisma generate && prisma migrate deploy",
+    "predev": "docker compose up -d && wait-on tcp:127.0.0.1:5432 && prisma generate && prisma migrate deploy",
     "dev": "next dev",
     "db:up": "docker compose up -d",
     "db:deploy": "prisma migrate deploy",
