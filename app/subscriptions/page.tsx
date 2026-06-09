@@ -55,11 +55,19 @@ export default function AssinaturasPage() {
   const [sucesso, setSucesso] = useState('')
   const [carregando, setCarregando] = useState(false)
 
+  const handle401 = useCallback(() => {
+    window.location.href = '/login'
+  }, [])
+
   const carregar = useCallback(async () => {
     const params = new URLSearchParams()
     if (filtroNome) params.set('nome', filtroNome)
     if (filtroStatus) params.set('status', filtroStatus)
-    const res = await fetch(`/api/subscriptions?${params}`)
+    const res = await fetch(`/api/subscriptions?${params}`, { credentials: 'include' })
+    if (res.status === 401) {
+      handle401()
+      return
+    }
     const data = await res.json()
     if (data.assinaturas) setAssinaturas(data.assinaturas)
   }, [filtroNome, filtroStatus])

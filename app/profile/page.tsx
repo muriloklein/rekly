@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 
 interface Perfil {
@@ -26,13 +26,38 @@ export default function ProfilePage() {
   const [excluindo, setExcluindo] = useState(false)
   const [erroExclusao, setErroExclusao] = useState('')
 
+  const handle401 = useCallback(() => {
+    window.location.href = '/login'
+  }, [])
+
   useEffect(() => {
-    fetch('/api/auth', { credentials: 'include' })
-      .then(r => r.json())
-      .then(d => {
-        if (d.usuario) setPerfil(d.usuario)
+    async function carregarPerfil() {
+      try {
+        const res = await fetch('/api/auth', {
+          credentials: 'include',
+        })
+
+        if (res.status === 401) {
+          window.location.href = '/login'
+          return
+        }
+
+        const data = await res.json()
+
+        if (!data.usuario) {
+          window.location.href = '/login'
+          return
+        }
+
+        setPerfil(data.usuario)
+      } catch (error) {
+        console.error(error)
+      } finally {
         setCarregando(false)
-      })
+      }
+    }
+
+    carregarPerfil()
   }, [])
 
   async function exportarDados() {

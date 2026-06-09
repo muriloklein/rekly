@@ -73,13 +73,25 @@ export default function PagamentosPage() {
   const [sucesso, setSucesso] = useState('')
   const [carregando, setCarregando] = useState(false)
 
+  const handle401 = useCallback(() => {
+    window.location.href = '/login'
+  }, [])
+
   const carregar = useCallback(async () => {
     const params = new URLSearchParams()
     if (filtroAssinatura) params.set('assinaturaId', filtroAssinatura)
     if (filtroStatus) params.set('status', filtroStatus)
     if (filtroMes) params.set('mes', filtroMes)
     if (filtroAno) params.set('ano', filtroAno)
-    const res = await fetch(`/api/payments?${params}`)
+    const res = await fetch(`/api/payments?${params}`, {
+      credentials: 'include',
+    })
+
+    if (res.status === 401) {
+      handle401()
+      return
+    }
+
     const data = await res.json()
     if (data.pagamentos) setPagamentos(data.pagamentos)
   }, [filtroAssinatura, filtroStatus, filtroMes, filtroAno])

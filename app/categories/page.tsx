@@ -13,9 +13,21 @@ export default function CategoriasPage() {
   const [carregando, setCarregando] = useState(false)
 
   const carregar = useCallback(async () => {
-    const res = await fetch('/api/categories')
+    const res = await fetch('/api/categories', {
+      credentials: 'include',
+    })
+
+    if (res.status === 401) {
+      handle401()
+      return
+    }
+
     const data = await res.json()
     if (data.categorias) setCategorias(data.categorias)
+  }, [])
+
+  const handle401 = useCallback(() => {
+    window.location.href = '/login'
   }, [])
 
   useEffect(() => { carregar() }, [carregar])

@@ -6,8 +6,14 @@ const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET ?? 'fallback_dev_secret_troque_em_producao'
 );
 
-// Rotas que não precisam de autenticação
 const ROTAS_PUBLICAS = ['/', '/login', '/register', '/forgot-password', '/reset-password'];
+
+function redirectLogin(request: NextRequest) {
+  const response = NextResponse.redirect(new URL('/login', request.url));
+  // Garante que o cookie seja removido em qualquer cenário (logout, token expirado, etc.)
+  response.cookies.set('rekly_token', '', { maxAge: 0, path: '/' });
+  return response;
+}
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -18,9 +24,9 @@ export async function middleware(request: NextRequest) {
 
   const token = request.cookies.get('rekly_token')?.value;
 
-  // Rota protegida sem token -> redireciona para login
+  // Rota protegida sem token -> redireciona e limpa cookie
   if (!ehPublica && !token) {
-    return NextResponse.redirect(new URL('/login', request.url));
+    return redirectLogin(request);
   }
 
   // Tem token -> valida
@@ -32,10 +38,8 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/dashboard', request.url));
       }
     } catch {
-      // Token inválido/expirado -> limpa cookie e redireciona para login
-      const response = NextResponse.redirect(new URL('/login', request.url));
-      response.cookies.delete('rekly_token');
-      return response;
+      // Token inválido ou expirado -> limpa cookie e redireciona para login
+      return redirectLogin(request);
     }
   }
 
