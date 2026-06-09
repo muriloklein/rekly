@@ -1,44 +1,48 @@
 import bcrypt from 'bcryptjs';
 import { SignJWT, jwtVerify } from 'jose';
 import * as usuarioRepo from '../repositories/usuarioRepository';
+import { prisma } from '../prisma';
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET ?? 'fallback_dev_secret_troque_em_producao'
 );
 const JWT_EXPIRES = process.env.JWT_EXPIRES_IN ?? '30m';
 
-// Chave: email, Valor: { tentativas, bloqueadoAte }
-const tentativas = new Map<string, { count: number; bloqueadoAte: Date | null }>();
 const MAX_TENTATIVAS = 5;
 const BLOQUEIO_MINUTOS = 15;
+const JANELA_MINUTOS = 15; // janela de contagem de tentativas
 
-function getTentativas(email: string) {
-  return tentativas.get(email) ?? { count: 0, bloqueadoAte: null };
+async function contarTentativasFalha(email: string): Promise<number> {
+  const desde = new Date(Date.now() - JANELA_MINUTOS * 60 * 1000);
+  return prisma.log.count({
+    where: {
+      acao: 'LOGIN_FALHA',
+      tabela_afetada: email,
+      criado_em: { gte: desde },
+    },
+  });
 }
 
-function incrementarTentativa(email: string) {
-  const atual = getTentativas(email);
-  const novoCount = atual.count + 1;
-  const bloqueadoAte =
-    novoCount >= MAX_TENTATIVAS
-      ? new Date(Date.now() + BLOQUEIO_MINUTOS * 60 * 1000)
-      : null;
-  tentativas.set(email, { count: novoCount, bloqueadoAte });
+async function registrarTentativaFalha(email: string): Promise<void> {
+  await prisma.log.create({
+    data: {
+      usuario_id: null,
+      acao: 'LOGIN_FALHA',
+      tabela_afetada: email,
+      registro_id: null,
+    },
+  });
 }
 
-function resetarTentativas(email: string) {
-  tentativas.delete(email);
+async function limparTentativasFalha(email: string): Promise<void> {
+  await prisma.log.deleteMany({
+    where: { acao: 'LOGIN_FALHA', tabela_afetada: email },
+  });
 }
 
-function estaBloqueado(email: string): boolean {
-  const { bloqueadoAte } = getTentativas(email);
-  if (!bloqueadoAte) return false;
-  if (new Date() > bloqueadoAte) {
-    // Bloqueio expirou — reseta
-    resetarTentativas(email);
-    return false;
-  }
-  return true;
+async function estaBloqueado(email: string): Promise<boolean> {
+  const tentativas = await contarTentativasFalha(email);
+  return tentativas >= MAX_TENTATIVAS;
 }
 
 // Gera token JWT
@@ -97,30 +101,29 @@ export async function login(email: string, senha: string) {
     return { erro: 'E-mail e senha são obrigatórios.' };
   }
 
-  if (estaBloqueado(email)) {
-    return { erro: `Conta temporariamente bloqueada por tentativas inválidas. Tente novamente em ${BLOQUEIO_MINUTOS} minutos.` };
+  if (await estaBloqueado(email)) {
+    return { erro: `Conta temporariamente bloqueada por tentativas inválidas. Tente novamente em ${BLOQUEIO_MINUTOS} minutos.`,};
   }
 
   const usuario = await usuarioRepo.findByEmail(email);
 
   if (!usuario) {
-    incrementarTentativa(email);
+    await registrarTentativaFalha(email);
     return { erro: 'Credenciais inválidas.' };
   }
 
   const senhaValida = await bcrypt.compare(senha, usuario.senha);
   if (!senhaValida) {
-    incrementarTentativa(email);
-    const { count } = getTentativas(email);
-    const restam = MAX_TENTATIVAS - count;
+    await registrarTentativaFalha(email);
+    const tentativas = await contarTentativasFalha(email);
+    const restam = MAX_TENTATIVAS - tentativas;
     if (restam <= 0) {
       return { erro: `Conta bloqueada por ${BLOQUEIO_MINUTOS} minutos após múltiplas tentativas inválidas.` };
     }
     return { erro: `Credenciais inválidas. ${restam} tentativa(s) restante(s).` };
   }
 
-  resetarTentativas(email);
-
+  await limparTentativasFalha(email);
   await usuarioRepo.registrarLog(usuario.id, 'LOGIN', 'usuarios', usuario.id);
 
   const token = await gerarToken(usuario.id, usuario.email);
