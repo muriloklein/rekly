@@ -96,6 +96,7 @@ export async function excluir(id: number, usuarioId: number) {
 
   await repo.remove(id)
   await registrarLog(usuarioId, 'EXCLUIR_PAGAMENTO', 'pagamentos', id)
+  await recalcularSugestoes(usuarioId)
   return { ok: true }
 }
 

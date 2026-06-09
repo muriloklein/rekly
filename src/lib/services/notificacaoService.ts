@@ -2,7 +2,7 @@ import { prisma } from '../prisma'
 import { enviarEmailVencimento, enviarEmailAtraso } from './mailService'
 
 export async function buscarPreferencias(usuarioId: number) {
-  const prefs = await prisma.preferenciasNotificacao.findUnique({
+  const prefs = await prisma.preferenciaNotificacao.findUnique({
     where: { usuario_id: usuarioId },
   })
   // Retorna defaults caso ainda não exista registro
@@ -20,7 +20,7 @@ export async function salvarPreferencias(
   dados: { notificar_vencimento: boolean; notificar_atraso: boolean; dias_antecedencia: number }
 ) {
   const diasValidos = Math.max(1, Math.min(30, dados.dias_antecedencia))
-  return prisma.preferenciasNotificacao.upsert({
+  return prisma.preferenciaNotificacao.upsert({
     where: { usuario_id: usuarioId },
     create: {
       usuario_id: usuarioId,

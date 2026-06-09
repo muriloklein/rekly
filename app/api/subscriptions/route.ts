@@ -59,13 +59,17 @@ export async function PUT(req: NextRequest) {
 
 // DELETE /api/subscriptions?id=X — excluir assinatura
 export async function DELETE(req: NextRequest) {
-  const sessao = await auth()
-  if (!sessao) return NextResponse.json({ erro: 'Não autorizado.' }, { status: 401 })
+  try {
+    const sessao = await auth()
+    if (!sessao) return NextResponse.json({ erro: 'Não autorizado.' }, { status: 401 })
 
-  const id = Number(req.nextUrl.searchParams.get('id'))
-  if (!id) return NextResponse.json({ erro: 'ID é obrigatório.' }, { status: 400 })
+    const id = Number(req.nextUrl.searchParams.get('id'))
+    if (!id) return NextResponse.json({ erro: 'ID é obrigatório.' }, { status: 400 })
 
-  const resultado = await svc.excluir(id, sessao.id)
-  if (resultado.erro) return NextResponse.json({ erro: resultado.erro }, { status: 400 })
-  return NextResponse.json({ ok: true })
+    const resultado = await svc.excluir(id, sessao.id)
+    if (resultado.erro) return NextResponse.json({ erro: resultado.erro }, { status: 400 })
+    return NextResponse.json({ ok: true })
+  } catch {
+    return NextResponse.json({ erro: 'Falha ao excluir a assinatura.' }, { status: 500 })
+  }
 }

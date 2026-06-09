@@ -15,9 +15,9 @@ const MOEDAS = ['BRL', 'USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', '
 
 const labelPeriodo: Record<string, string> = { mensal: 'Mensal', trimestral: 'Trimestral', semestral: 'Semestral', anual: 'Anual' }
 const badgeStatus: Record<string, string> = {
-  ativo: 'bg-green-100 text-green-700',
-  teste: 'bg-yellow-100 text-yellow-700',
-  cancelado: 'bg-gray-100 text-gray-500',
+  ativo: 'bg-green-100 text-green-800',
+  teste: 'bg-amber-100 text-amber-800',
+  cancelado: 'bg-gray-100 text-gray-700',
 }
 
 const labelStatus: Record<string, string> = {
@@ -55,11 +55,19 @@ export default function AssinaturasPage() {
   const [sucesso, setSucesso] = useState('')
   const [carregando, setCarregando] = useState(false)
 
+  const handle401 = useCallback(() => {
+    window.location.href = '/login'
+  }, [])
+
   const carregar = useCallback(async () => {
     const params = new URLSearchParams()
     if (filtroNome) params.set('nome', filtroNome)
     if (filtroStatus) params.set('status', filtroStatus)
-    const res = await fetch(`/api/subscriptions?${params}`)
+    const res = await fetch(`/api/subscriptions?${params}`, { credentials: 'include' })
+    if (res.status === 401) {
+      handle401()
+      return
+    }
     const data = await res.json()
     if (data.assinaturas) setAssinaturas(data.assinaturas)
   }, [filtroNome, filtroStatus])
@@ -207,12 +215,12 @@ export default function AssinaturasPage() {
         </select>
         {(filtroNome || filtroStatus) &&
           <button onClick={() => { setFiltroNome(''); setFiltroStatus('') }}
-            className="text-sm text-gray-400 hover:text-gray-600">Limpar filtros</button>}
+            className="text-sm text-gray-500 hover:text-gray-700">Limpar filtros</button>}
       </div>
 
       {/* Lista */}
       {assinaturas.length === 0
-        ? <div className="bg-white rounded-xl border border-gray-200 p-10 text-center text-gray-400 text-sm">
+        ? <div className="bg-white rounded-xl border border-gray-200 p-10 text-center text-gray-500 text-sm">
             Nenhuma assinatura encontrada.
           </div>
         : <div className="space-y-3">
@@ -229,16 +237,16 @@ export default function AssinaturasPage() {
                         👥 Compartilhado
                       </span>}
                   </div>
-                  <div className="text-xs text-gray-400 mb-2">{a.categoria.nome} · {labelPeriodo[a.periodo]} · vence dia {a.dia_cobranca}</div>
+                  <div className="text-xs text-gray-500 mb-2">{a.categoria.nome} · {labelPeriodo[a.periodo]} · vence dia {a.dia_cobranca}</div>
                   <div className="flex gap-4 text-sm">
                     <div>
-                      <span className="text-gray-400 text-xs">Valor nominal</span>
-                      <p className="font-semibold text-gray-700">{formatBRL(a.mensalidade)}<span className="text-gray-400 font-normal">/mês</span></p>
+                      <span className="text-gray-500 text-xs">Valor nominal</span>
+                      <p className="font-semibold text-gray-700">{formatBRL(a.mensalidade)}<span className="text-gray-500 font-normal">/mês</span></p>
                     </div>
                     {a.participantes > 1 && (
                       <div>
-                        <span className="text-gray-400 text-xs">Seu custo real</span>
-                        <p className="font-semibold text-indigo-600">{formatBRL(a.custoReal)}<span className="text-gray-400 font-normal">/mês</span></p>
+                        <span className="text-gray-500 text-xs">Seu custo real</span>
+                        <p className="font-semibold text-indigo-600">{formatBRL(a.custoReal)}<span className="text-gray-500 font-normal">/mês</span></p>
                       </div>
                     )}
                   </div>

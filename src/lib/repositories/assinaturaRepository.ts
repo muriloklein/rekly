@@ -64,7 +64,10 @@ export async function update(id: number, data: Partial<{
 }
 
 export async function remove(id: number) {
-  return prisma.assinatura.delete({ where: { id } })
+  return prisma.$transaction(async (tx) => {
+    await tx.sugestaoEconomia.deleteMany({ where: { assinatura_id: id } })
+    return tx.assinatura.delete({ where: { id } })
+  })
 }
 
 export async function hasPagamentos(id: number) {

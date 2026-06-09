@@ -110,6 +110,7 @@ export async function excluir(id: number, usuarioId: number) {
 
   await repo.remove(id)
   await registrarLog(usuarioId, 'EXCLUIR_ASSINATURA', 'assinaturas', id)
+  await recalcularSugestoes(usuarioId)
   return { ok: true }
 }
 

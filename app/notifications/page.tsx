@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 interface Preferencias {
   notificar_vencimento: boolean
@@ -19,15 +19,33 @@ export default function NotificacoesPage() {
   const [sucesso, setSucesso] = useState(false)
   const [erro, setErro] = useState('')
 
+  const handle401 = useCallback(() => {
+    window.location.href = '/login'
+  }, [])
+
   useEffect(() => {
     fetch('/api/notifications', { credentials: 'include' })
-      .then(r => r.json())
+      .then(async r => {
+        if (r.status === 401) {
+          handle401()
+          return null
+        }
+
+        return r.json()
+      })
       .then(d => {
-        if (d.preferencias) setPrefs(d.preferencias)
+        if (!d) return
+
+        if (d.preferencias) {
+          setPrefs(d.preferencias)
+        }
+
         setCarregando(false)
       })
-      .catch(() => setCarregando(false))
-  }, [])
+      .catch(() => {
+        setCarregando(false)
+      })
+  }, [handle401])
 
   async function salvar() {
     setSalvando(true)
@@ -181,11 +199,7 @@ export default function NotificacoesPage() {
           </li>
           <li className="flex items-start gap-2">
             <span className="text-indigo-400 mt-0.5">•</span>
-            Apenas assinaturas com status <strong className="text-gray-600">ativo</strong> ou <strong className="text-gray-600">teste</strong> são consideradas.
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="text-indigo-400 mt-0.5">•</span>
-            Configure seu servidor SMTP nas variáveis de ambiente para habilitar o envio.
+            Apenas assinaturas com status <strong className="text-gray-600">ativo</strong> são consideradas.
           </li>
         </ul>
       </div>

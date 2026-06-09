@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 interface Categoria { id: number; nome: string }
@@ -57,6 +58,10 @@ function formatBRL(v: number) {
   return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
 
+function formatDataBR(iso: string) {
+  return new Date(iso).toLocaleDateString('pt-BR', { timeZone: 'UTC' })
+}
+
 function nomeMes(mes: number) {
   return new Date(2026, mes - 1, 1).toLocaleString('pt-BR', { month: 'long' })
 }
@@ -68,6 +73,7 @@ const badgeStatus: Record<string, string> = {
 }
 
 export default function DashboardPage() {
+  const router = useRouter()
   const hoje = new Date()
   const [mes, setMes] = useState(hoje.getMonth() + 1)
   const [ano, setAno] = useState(hoje.getFullYear())
@@ -79,21 +85,30 @@ export default function DashboardPage() {
   const [sugestoes, setSugestoes] = useState<Sugestao[]>([])
   const [dispensando, setDispensando] = useState<number | null>(null)
 
+  // Redireciona para login em qualquer resposta 401
+  const handle401 = useCallback(() => {
+    window.location.href = '/login'
+  }, [])
+
   useEffect(() => {
     fetch('/api/categories', { credentials: 'include' })
-      .then(r => r.json())
-      .then(d => { if (d.categorias) setCategorias(d.categorias) })
+      .then(r => {
+        if (r.status === 401) { handle401(); return null }
+        return r.json()
+      })
+      .then(d => { if (d?.categorias) setCategorias(d.categorias) })
       .catch(() => {})
-  }, [])
+  }, [handle401])
 
   const carregarSugestoes = useCallback(async () => {
     try {
       const res = await fetch('/api/economy', { credentials: 'include' })
+      if (res.status === 401) { handle401(); return }
       if (!res.ok) return
       const data = await res.json()
       if (data.sugestoes) setSugestoes(data.sugestoes)
     } catch { }
-  }, [])
+  }, [handle401])
 
   useEffect(() => { carregarSugestoes() }, [carregarSugestoes])
 
@@ -103,6 +118,7 @@ export default function DashboardPage() {
       const params = new URLSearchParams({ mes: String(mes), ano: String(ano) })
       if (categoriaId) params.set('categoriaId', String(categoriaId))
       const res = await fetch(`/api/dashboard?${params}`, { credentials: 'include' })
+      if (res.status === 401) { handle401(); return }
       if (!res.ok) { setCarregando(false); return }
       const data = await res.json()
       if (data?.resumoGastos) setDados(data)
@@ -111,7 +127,7 @@ export default function DashboardPage() {
     } finally {
       setCarregando(false)
     }
-  }, [mes, ano, categoriaId])
+  }, [mes, ano, categoriaId, handle401])
 
   useEffect(() => { carregar() }, [carregar])
 
@@ -124,6 +140,7 @@ export default function DashboardPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id }),
       })
+      if (res.status === 401) { handle401(); return }
       if (res.ok) setSugestoes(prev => prev.filter(s => s.id !== id))
     } finally {
       setDispensando(null)
@@ -262,7 +279,7 @@ export default function DashboardPage() {
                     <div>
                       <p className="font-medium text-gray-800">{p.nomeAssinatura}</p>
                       <p className="text-xs text-gray-400">
-                        {new Date(p.dataPagamento).toLocaleDateString('pt-BR')}
+                        {formatDataBR(p.dataPagamento)}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">

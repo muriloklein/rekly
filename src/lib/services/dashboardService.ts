@@ -47,7 +47,7 @@ export async function obterDadosDashboard(
   categoriaId?: number
 ): Promise<DadosDashboard> {
   const [resumoGastos, vencimentosProximos, indicadores, pagamentosRecentes] = await Promise.all([
-    calcularResumoGastos(usuarioId, categoriaId),
+    calcularResumoGastos(usuarioId, mes, ano, categoriaId),
     buscarVencimentosProximos(usuarioId),
     calcularIndicadoresPendentes(usuarioId, mes, ano),
     buscarPagamentosRecentes(usuarioId),
@@ -63,14 +63,38 @@ export async function obterDadosDashboard(
   }
 }
 
-async function calcularResumoGastos(usuarioId: number, categoriaId?: number): Promise<ResumoGastos> {
+async function calcularResumoGastos(
+  usuarioId: number,
+  mes: number,
+  ano: number,
+  categoriaId?: number
+): Promise<ResumoGastos> {
+  // Último dia do mês consultado — assinaturas iniciadas após isso não existiam naquele mês
+  const ultimoDiaDoMes = new Date(ano, mes, 0, 23, 59, 59, 999)
+
   const assinaturas = await prisma.assinatura.findMany({
     where: {
       usuario_id: usuarioId,
-      status: 'ativo',
+      // Considera ativo OU cancelado: cancelado ainda pode ter existido no mês consultado.
+      // Filtramos por data_inicio para garantir que a assinatura já existia naquele mês.
+      status: { in: ['ativo', 'cancelado'] },
+      data_inicio: { lte: ultimoDiaDoMes },
       ...(categoriaId ? { categoria_id: categoriaId } : {}),
     },
     include: { categoria: true },
+  })
+
+  // Para meses passados, inclui canceladas que existiam no período.
+  // Para o mês atual, exclui canceladas (já não estão ativas).
+  const hoje = new Date()
+  const mesMostradoEhAtual = mes === hoje.getMonth() + 1 && ano === hoje.getFullYear()
+  const mesMostradoEhFuturo = new Date(ano, mes - 1, 1) > hoje
+
+  const assinaturasFiltradas = assinaturas.filter(a => {
+    if (a.status === 'ativo') return true
+    // Cancelada: só inclui se o mês consultado for passado
+    if (mesMostradoEhAtual || mesMostradoEhFuturo) return false
+    return true
   })
 
   let totalNominal = 0
@@ -78,7 +102,7 @@ async function calcularResumoGastos(usuarioId: number, categoriaId?: number): Pr
 
   const mapa = new Map<number, { nome: string; nominal: number; custoReal: number }>()
 
-  for (const a of assinaturas) {
+  for (const a of assinaturasFiltradas) {
     const valor = Number(a.valor)
     const mensalidade = calcularMensalidade(valor, a.periodo)
     const custoReal = calcularCustoReal(valor, a.periodo, a.participantes)
