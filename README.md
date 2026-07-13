@@ -1,95 +1,170 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 💰 Rekly
 
-## Getting Started
+Rekly é uma aplicação web desenvolvida para auxiliar no gerenciamento de gastos recorrentes, como assinaturas de serviços, contas mensais, academias, planos de streaming, internet, água, energia e outras despesas periódicas.
 
-Run the full development environment with one command:
+O objetivo da plataforma é centralizar essas informações em um único ambiente, permitindo que o usuário acompanhe seus gastos, organize vencimentos e receba notificações para evitar esquecimentos.
 
-```bash
-npm run dev
+---
+
+## 🚀 Tecnologias
+
+### Frontend
+- Next.js 16
+- React 19
+- TypeScript
+- Tailwind CSS
+
+### Backend
+- Next.js API Routes
+- JWT Authentication
+- Prisma ORM
+
+### Banco de Dados
+- PostgreSQL
+- Docker Compose
+
+### Outras tecnologias
+- Nodemailer
+- bcryptjs
+- Prisma Client
+
+---
+
+## ✨ Funcionalidades
+
+- Cadastro de usuários
+- Login com autenticação JWT
+- Cadastro de gastos recorrentes
+- Edição e exclusão de despesas
+- Controle de vencimentos
+- Notificações automáticas
+- Interface responsiva
+- Persistência de dados em PostgreSQL
+
+---
+
+## 📁 Estrutura do projeto
+
+```
+rekly/
+│
+├── app/
+├── components/
+├── prisma/
+├── public/
+├── scripts/
+├── lib/
+└── docker-compose.yml
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-That command now:
+## ⚙️ Instalação
 
-1. Starts the PostgreSQL container with Docker Compose.
-2. Waits for the database to accept connections.
-3. Runs `prisma generate`.
-4. Runs `prisma migrate deploy`.
-5. Starts the Next.js development server.
-
-If you prefer to run the steps manually (step-by-step), here are the exact commands to run in order:
-
-1) Start the database (Docker Compose):
+### 1. Clone o repositório
 
 ```bash
-docker compose up -d
+git clone https://github.com/seu-usuario/rekly.git
+cd rekly
 ```
 
-2) Install node dependencies (if not installed):
+---
+
+### 2. Instale as dependências
 
 ```bash
 npm install
 ```
 
-3) Ensure environment variables are set in `.env.local` (at minimum `DATABASE_URL` and `JWT_SECRET`).
+---
 
-4) Generate the Prisma client:
+### 3. Configure as variáveis de ambiente
+
+Crie um arquivo `.env.local` contendo, no mínimo:
+
+```env
+DATABASE_URL=
+JWT_SECRET=
+```
+
+---
+
+### 4. Inicie o banco de dados
+
+```bash
+docker compose up -d
+```
+
+---
+
+### 5. Gere o cliente Prisma
 
 ```bash
 npx prisma generate
 ```
 
-5) Apply migrations to the database (choose one):
+---
 
-- For a developer workflow (creates new migrations when schema changed):
-
-```bash
-npx prisma migrate dev
-```
-
-- For applying already-committed migrations (non-interactive / CI):
+### 6. Execute as migrations
 
 ```bash
 npx prisma migrate deploy
 ```
 
-6) Start Next.js in development mode:
+---
+
+### 7. Execute a aplicação
 
 ```bash
 npm run dev
 ```
 
-Useful extras:
+A aplicação estará disponível em:
 
-```bash
-# Stop database containers
-docker compose down
-
-# Remove DB volume (data loss)
-docker compose down -v
+```
+http://localhost:3000
 ```
 
-Notes:
-- The project expects a PostgreSQL instance reachable via `DATABASE_URL` in `.env.local` (the repository includes a `docker-compose.yml` that starts Postgres with user `rekly`).
-- After the migrations are applied you can create a user via the app's `/register` page before attempting to log in.
-- If you change the Prisma schema, run `npx prisma migrate dev` to create a new migration, then commit it.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📦 Scripts disponíveis
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run dev                 # Executa a aplicação
+npm run build               # Gera a versão de produção
+npm run start               # Executa a versão de produção
+npm run lint                # Executa o ESLint
+npm run prisma:generate     # Gera o Prisma Client
+npm run db:deploy           # Executa as migrations
+npm run cron:notificacoes   # Executa o serviço de notificações
+```
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## 🛠️ Arquitetura
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Frontend:** Next.js + React
+- **Backend:** API Routes do Next.js
+- **ORM:** Prisma
+- **Banco de Dados:** PostgreSQL
+- **Autenticação:** JWT
+- **Containerização:** Docker Compose
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## 📌 Principais recursos
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Controle de despesas recorrentes
+- Organização financeira
+- Cadastro de categorias
+- Acompanhamento de vencimentos
+- Notificações automáticas
+- Interface moderna e responsiva
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## 👨‍💻 Autores
+
+- Murilo Kaemmerer Klein
+- Guilherme
+- Samuel
