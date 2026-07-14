@@ -64,7 +64,7 @@ rekly/
 ### 1. Clone o repositório
 
 ```bash
-git clone https://github.com/seu-usuario/rekly.git
+git clone https://github.com/muriloklein/rekly.git
 cd rekly
 ```
 
